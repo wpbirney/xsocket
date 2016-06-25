@@ -67,38 +67,68 @@ enum class sock	{
 };
 
 /*
- *	base endpoints for sockaddr_in and sockaddr_in6 (TODO)
+ *	sa_* functions for sockaddr_* interactions
  */
 
-struct endpointV4
-{
-	endpointV4()	{ memset( &addr, 0, sizeof( sockaddr_in ) ); }
-	endpointV4( int port )	{ set( "0", port ); }
-	endpointV4( std::string addr, int port )	{ set( addr, port ); }
+void sa_set( sockaddr_in* addr, std::string ip, int port )	{
+	addr->sin_family = AF_INET;
+	if( ip == "0" || ip == "0.0.0.0" )
+		addr->sin_addr.s_addr = INADDR_ANY;
+	else
+		inet_pton( AF_INET,  ip.c_str(), &addr->sin_addr );
+	addr->sin_port = htons( port );
+}
 
-	bool operator== ( endpointV4& e )	{
-		if( memcmp( &addr, &e, sizeof( sockaddr_in ) ) == 0 )
+void sa_set( sockaddr_in6* addr, std::string ip, int port )	{
+	addr->sin6_family = AF_INET6;
+	if( ip == "0" || ip == "0.0.0.0" )
+		addr->sin6_addr = in6addr_any;
+	else
+		inet_pton( AF_INET6,  ip.c_str(), &addr->sin6_addr );
+	addr->sin6_port = htons( port );
+}
+
+int sa_getPort( sockaddr_in* addr )	{ return ntohs( addr->sin_port ); }
+int sa_getPort( sockaddr_in6* addr )	{ return ntohs( addr->sin6_port ); }
+
+std::string sa_getIP( sockaddr_in* addr )	{
+	std::vector<char> buf( INET_ADDRSTRLEN );
+	inet_ntop( AF_INET, &addr->sin_addr, buf.data(), INET_ADDRSTRLEN );
+	return std::string( buf.begin(), buf.end() );
+}
+
+std::string sa_getIP( sockaddr_in6* addr )	{
+	std::vector<char> buf( INET6_ADDRSTRLEN );
+	inet_ntop( AF_INET6, &addr->sin6_addr, buf.data(), INET6_ADDRSTRLEN );
+	return std::string( buf.begin(), buf.end() );
+}
+
+/*
+ *	generic endpoint template class for uniform access to ipv4 and ipv6
+ */
+
+template<af f, typename T>
+struct endpoint
+{
+	endpoint()				{ memset( &addr, 0, sizeof( T ) ); }
+	endpoint( int port )			{ sa_set( &addr, "0", port ); }
+	endpoint( std::string ip, int port )	{ sa_set( &addr, ip, port ); }
+
+	bool operator== ( T& e )	{
+		if( memcmp( &addr, &e, sizeof( T ) ) == 0 )
 			return true;
 		return false;
 	}
 
-	bool operator!= ( endpointV4& e )	{ return !operator==( e ); }
+	bool operator!= ( T& e )	{ return !operator==( e ); }
 
-	void set( std::string ip, int port )	{
-		addr.sin_family = (int)af::inet;
-		if( ip == "0" || ip == "0.0.0.0" )
-			addr.sin_addr.s_addr = INADDR_ANY;
-		else
-			addr.sin_addr.s_addr = inet_addr( ip.c_str() );
-		addr.sin_port = htons( port );
-	}
+	void set( std::string ip, int port )	{ sa_set( &addr, ip, port ); }
+	std::string getIP()	{ return sa_getIP( &addr ); }
+	int getPort()		{ return sa_getPort( &addr ); }
+	static af getAF()	{ return f; }
 
-	std::string getIP()	{ return inet_ntoa( addr.sin_addr ); }
-	int getPort()		{ return ntohs( addr.sin_port ); }
-	static af getAF()	{ return af::inet; }
-
-	const sockaddr_in* getData()	{ return &addr; }
-	int getDataSize()	{ return sizeof( sockaddr_in ); }
+	const T* getData()	{ return &addr; }
+	int getDataSize()	{ return sizeof( T ); }
 
 	std::string asString()	{
 		std::stringstream ss;
@@ -106,7 +136,7 @@ struct endpointV4
 		return ss.str();
 	}
 
-	sockaddr_in addr;
+	T addr;
 };
 
 // getname calls getsockname/getpeername and returns it as an endpoint type
@@ -265,7 +295,14 @@ private:
 
 namespace ip
 {
-typedef net::endpointV4	endpoint;
+typedef net::endpoint<af::inet, sockaddr_in>	endpoint;
+typedef socket<net::sock::dgram, endpoint>	UDPSocket;
+typedef socket<net::sock::stream, endpoint>	TCPSocket;
+}
+
+namespace ipv6
+{
+typedef net::endpoint<af::inet6, sockaddr_in6>	endpoint;
 typedef socket<net::sock::dgram, endpoint>	UDPSocket;
 typedef socket<net::sock::stream, endpoint>	TCPSocket;
 }
