@@ -61,7 +61,8 @@ namespace net
 
 enum class af	{
 	inet = AF_INET,
-	inet6 = AF_INET6
+	inet6 = AF_INET6,
+	unspec = AF_UNSPEC
 };
 
 enum class sock	{
@@ -73,22 +74,26 @@ enum class sock	{
  *	generic endpoint template class for uniform access to ipv4 and ipv6
  */
 
-template<af f, typename T>
 struct endpoint
 {
-	endpoint()				{ memset( &addr, 0, sizeof( T ) ); }
-	endpoint( int port )			{ set( "0", port ); }
-	endpoint( std::string ip, int port )	{ set( ip, port ); }
+	endpoint()	{
+		memset( &addr, 0, sizeof( sockaddr_storage ) );
+		addrlen = sizeof( sockaddr_storage);
+	}
 
-	bool operator== ( T& e )	{
-		if( memcmp( &addr, &e, sizeof( T ) ) == 0 )
+	endpoint( int port )				{ set( "0", port ); }
+	endpoint( std::string ip, int port )		{ set( ip, port ); }
+	endpoint( std::string ip, int port, af fam)	{ set( ip, port, fam ); }
+
+	bool operator== ( endpoint& e )	{
+		if( memcmp( &addr, &e, addrlen ) == 0 )
 			return true;
 		return false;
 	}
 
-	bool operator!= ( T& e )	{ return !operator==( e ); }
+	bool operator!= ( endpoint& e )	{ return !operator==( e ); }
 
-	void set( std::string ip, int port )	{
+	void set( std::string ip, int port, af f=af::unspec )	{
 		addrinfo hints;
 		memset(&hints, 0, sizeof(addrinfo));
 		hints.ai_family = (int)f;
@@ -107,6 +112,8 @@ struct endpoint
 
 		if( res != nullptr )	{
 			memcpy( &addr, res->ai_addr, res->ai_addrlen );
+			addrlen = res->ai_addrlen;
+			addrfam = (af)res->ai_family;
 		}
 
 		freeaddrinfo( res );
@@ -123,10 +130,10 @@ struct endpoint
 		return std::atoi( std::string(buf.begin(), buf.end()).c_str() );
 	}
 
-	static af getAF()	{ return f; }
+	af getAF()	{ return addrfam; }
 
-	const T* getData()	{ return &addr; }
-	int getDataSize()	{ return sizeof( T ); }
+	sockaddr* getData()	{ return (sockaddr*)&addr; }
+	int getDataSize()	{ return addrlen; }
 
 	std::string asString()	{
 		std::stringstream ss;
@@ -134,40 +141,31 @@ struct endpoint
 		return ss.str();
 	}
 
-	T addr;
+	sockaddr_storage addr;
 	socklen_t addrlen;
+	af addrfam;
 };
 
 // getname calls getsockname/getpeername and returns it as an endpoint type
-template<typename T>
-T getname(int fd, std::function<int(int,sockaddr*,socklen_t*)> target)
+endpoint getname(int fd, std::function<int(int,sockaddr*,socklen_t*)> target)
 {
-	T ep;
+	endpoint ep;
 	socklen_t al = ep.getDataSize();
-	int i = target(fd, (sockaddr*)ep.getData(), &al);
+	int i = target(fd, ep.getData(), &al);
 	return ep;
 }
 
 /*
- *	base socket template class
+ *	base socket class
  */
 
-template< sock s, typename eptype >
 struct socket
 {
-	socket()	{
-		#ifdef _WIN32
-			if(!_wsaInitDone)
-				_initWinsock();
-		#endif
-		fd = ::socket( (int)eptype::getAF(), (int)s, 0);
+	socket()	{ fd = -1; }
 
-		#ifdef XS_NONBLOCKING
-			setnonblocking( true );
-		#endif
-	}
+	socket( af fam, sock socktype )	{ init( fam, socktype ); }
 
-	socket( int port ) : socket()	{
+	socket( af fam, sock socktype, int port ) : socket( fam, socktype )	{
 		int r = bind( port );
 		if( r == -1 )	{
 			close();
@@ -180,41 +178,55 @@ struct socket
 		return *this;
 	}
 
-	int accept( eptype* ep )	{
+	int init( af fam, sock socktype )	{
+		#ifdef _WIN32
+			if(!_wsaInitDone)
+				_initWinsock();
+		#endif
+		fd = ::socket( (int)fam, (int)socktype, 0);
+		addrfam = fam;
+		#ifdef XS_NONBLOCKING
+			setnonblocking( true );
+		#endif
+		return fd;
+	}
+
+	int accept( endpoint* ep )	{
 		socklen_t al = ep->getDataSize();
-		return ::accept( fd, (sockaddr*)ep->getData(), &al );
+		return ::accept( fd, ep->getData(), &al );
 	}
 
 	int listen( int n )	{
 		return ::listen( fd, n );
 	}
 
-	int bind( eptype ep )	{
-		return ::bind( fd, (sockaddr*)ep.getData(), ep.getDataSize() );
+	int bind( std::string addr, int port )	{
+		endpoint ep( addr, port, addrfam );
+		return ::bind( fd, ep.getData(), ep.getDataSize() );
 	}
 
 	int bind( int port )	{
-		return bind( eptype( "0", port ) );
+		return bind( "0", port );
 	}
 
-	int connect( eptype ep )	{
-		return ::connect( fd, (sockaddr*)ep.getData(), ep.getDataSize() );
+	int connect( endpoint ep )	{
+		return ::connect( fd, ep.getData(), ep.getDataSize() );
 	}
 
-	int sendto( char* data, int len, eptype ep )	{
-		return ::sendto( fd, data, len, 0, (sockaddr*)ep.getData(), ep.getDataSize() );
+	int sendto( char* data, int len, endpoint ep )	{
+		return ::sendto( fd, data, len, 0, ep.getData(), ep.getDataSize() );
 	}
 
-	int sendto( std::string* data, eptype ep )	{
+	int sendto( std::string* data, endpoint ep )	{
 		return sendto( (char*)data->c_str(), data->size(), ep );
 	}
 
-	int recvfrom( char* buf, int len, eptype* ep )	{
+	int recvfrom( char* buf, int len, endpoint* ep )	{
 		socklen_t al = ep->getDataSize();
-		return ::recvfrom( fd, buf, len, 0, (sockaddr*)ep->getData(), &al );
+		return ::recvfrom( fd, buf, len, 0, ep->getData(), &al );
 	}
 
-	int recvfrom( std::string* buf, int len, eptype* ep )	{
+	int recvfrom( std::string* buf, int len, endpoint* ep )	{
 		std::vector<char> buffer( len );
 		int r = recvfrom( buffer.data(), buffer.size(), ep );
 		if( r > 0 )
@@ -272,12 +284,12 @@ struct socket
 		#endif
 	}
 
-	eptype getlocaladdr()	{
-		return getname<eptype>(fd, getsockname);
+	endpoint getlocaladdr()	{
+		return getname(fd, getsockname);
 	}
 
-	eptype getremoteaddr()	{
-		return getname<eptype>(fd, getpeername);
+	endpoint getremoteaddr()	{
+		return getname(fd, getpeername);
 	}
 
 	int getError()	{ return errno; }
@@ -290,21 +302,8 @@ struct socket
 
 private:
 	int fd;
+	af addrfam;
 };
-
-namespace ip
-{
-typedef net::endpoint<af::inet, sockaddr_in>	endpoint;
-typedef socket<net::sock::dgram, endpoint>	UDPSocket;
-typedef socket<net::sock::stream, endpoint>	TCPSocket;
-}
-
-namespace ipv6
-{
-typedef net::endpoint<af::inet6, sockaddr_in6>	endpoint;
-typedef socket<net::sock::dgram, endpoint>	UDPSocket;
-typedef socket<net::sock::stream, endpoint>	TCPSocket;
-}
 
 } //namespace net
 
