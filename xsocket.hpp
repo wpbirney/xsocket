@@ -147,7 +147,7 @@ struct endpoint
 };
 
 // getname calls getsockname/getpeername and returns it as an endpoint type
-endpoint getname(int fd, std::function<int(int,sockaddr*,socklen_t*)> target)
+inline endpoint getname(int fd, std::function<int(int,sockaddr*,socklen_t*)> target)
 {
 	endpoint ep;
 	socklen_t al = ep.getDataSize();
