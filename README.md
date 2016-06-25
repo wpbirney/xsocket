@@ -5,7 +5,11 @@ The following basic example shows how to create and bind a UDPSocket, TCPSocket 
 ```c++
 #include <xsocket>
 
+//for ipv4
 using namespace net::ip;
+
+//for ipv6
+//using namespace net::ipv6;
 
 int main( int argc, char** argv )	{
 	UDPSocket sock ( 61270 );
