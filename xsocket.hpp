@@ -41,8 +41,11 @@ THE SOFTWARE.
 	#include <netinet/in.h>
 	#include <fcntl.h>
 	#include <unistd.h>
+	#include <netdb.h>
 #else
+	//#define _WIN32_WINNT 0x0600
 	#include <winsock2.h>
+	#include <ws2tcpip.h>
 	typedef int socklen_t;
 	static WSAData _wsaData;
 	static bool _wsaInitDone = false;
@@ -67,43 +70,6 @@ enum class sock	{
 };
 
 /*
- *	sa_* functions for sockaddr_* interactions
- */
-
-void sa_set( sockaddr_in* addr, std::string ip, int port )	{
-	addr->sin_family = AF_INET;
-	if( ip == "0" || ip == "0.0.0.0" )
-		addr->sin_addr.s_addr = INADDR_ANY;
-	else
-		inet_pton( AF_INET,  ip.c_str(), &addr->sin_addr );
-	addr->sin_port = htons( port );
-}
-
-void sa_set( sockaddr_in6* addr, std::string ip, int port )	{
-	addr->sin6_family = AF_INET6;
-	if( ip == "0" || ip == "0.0.0.0" )
-		addr->sin6_addr = in6addr_any;
-	else
-		inet_pton( AF_INET6,  ip.c_str(), &addr->sin6_addr );
-	addr->sin6_port = htons( port );
-}
-
-int sa_getPort( sockaddr_in* addr )	{ return ntohs( addr->sin_port ); }
-int sa_getPort( sockaddr_in6* addr )	{ return ntohs( addr->sin6_port ); }
-
-std::string sa_getIP( sockaddr_in* addr )	{
-	std::vector<char> buf( INET_ADDRSTRLEN );
-	inet_ntop( AF_INET, &addr->sin_addr, buf.data(), INET_ADDRSTRLEN );
-	return std::string( buf.begin(), buf.end() );
-}
-
-std::string sa_getIP( sockaddr_in6* addr )	{
-	std::vector<char> buf( INET6_ADDRSTRLEN );
-	inet_ntop( AF_INET6, &addr->sin6_addr, buf.data(), INET6_ADDRSTRLEN );
-	return std::string( buf.begin(), buf.end() );
-}
-
-/*
  *	generic endpoint template class for uniform access to ipv4 and ipv6
  */
 
@@ -111,8 +77,8 @@ template<af f, typename T>
 struct endpoint
 {
 	endpoint()				{ memset( &addr, 0, sizeof( T ) ); }
-	endpoint( int port )			{ sa_set( &addr, "0", port ); }
-	endpoint( std::string ip, int port )	{ sa_set( &addr, ip, port ); }
+	endpoint( int port )			{ set( "0", port ); }
+	endpoint( std::string ip, int port )	{ set( ip, port ); }
 
 	bool operator== ( T& e )	{
 		if( memcmp( &addr, &e, sizeof( T ) ) == 0 )
@@ -122,9 +88,41 @@ struct endpoint
 
 	bool operator!= ( T& e )	{ return !operator==( e ); }
 
-	void set( std::string ip, int port )	{ sa_set( &addr, ip, port ); }
-	std::string getIP()	{ return sa_getIP( &addr ); }
-	int getPort()		{ return sa_getPort( &addr ); }
+	void set( std::string ip, int port )	{
+		addrinfo hints;
+		memset(&hints, 0, sizeof(addrinfo));
+		hints.ai_family = (int)f;
+
+		addrinfo *res, *rp;
+		const char *host = ip.c_str();
+		std::string p = std::to_string( port );
+		const char *srv = p.c_str();
+
+		if( ip == "0" )	{
+			hints.ai_flags = AI_PASSIVE;
+			host = nullptr;
+		}
+
+		getaddrinfo( host, srv, &hints, &res );
+
+		if( res != nullptr )	{
+			memcpy( &addr, res->ai_addr, res->ai_addrlen );
+		}
+
+		freeaddrinfo( res );
+	}
+
+	std::string getIP()	{
+		std::vector<char> buf( INET6_ADDRSTRLEN );
+		getnameinfo( (sockaddr*)&addr, getDataSize(), buf.data(), buf.size(), nullptr, 0, NI_NUMERICHOST );
+		return std::string( buf.begin(), buf.end() );
+	}
+	int getPort()		{
+		std::vector<char> buf( INET6_ADDRSTRLEN );
+		getnameinfo( (sockaddr*)&addr, getDataSize(), nullptr, 0, buf.data(), buf.size(), NI_NUMERICSERV );
+		return std::atoi( std::string(buf.begin(), buf.end()).c_str() );
+	}
+
 	static af getAF()	{ return f; }
 
 	const T* getData()	{ return &addr; }
@@ -137,6 +135,7 @@ struct endpoint
 	}
 
 	T addr;
+	socklen_t addrlen;
 };
 
 // getname calls getsockname/getpeername and returns it as an endpoint type
