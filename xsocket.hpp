@@ -53,6 +53,9 @@ THE SOFTWARE.
 		WSAStartup(MAKEWORD(2,2), &_wsaData);
 		_wsaInitDone = true;
 	}
+	#define SHUT_RD SD_RECEIVE
+	#define SHUT_WR	SD_SEND
+	#define SHUT_RDWR SD_BOTH
 #endif
 
 
@@ -70,6 +73,12 @@ enum class sock	{
 	dgram = SOCK_DGRAM
 };
 
+enum class shut	{
+	rd = SHUT_RD,
+	wr = SHUT_WR,
+	rdwr = SHUT_RDWR
+};
+
 /*
  *	generic endpoint template class for uniform access to ipv4 and ipv6
  */
@@ -78,12 +87,12 @@ struct endpoint
 {
 	endpoint()	{
 		memset( &addr, 0, sizeof( sockaddr_storage ) );
-		addrlen = sizeof( sockaddr_storage);
+		addrlen = sizeof( sockaddr_storage );
 	}
 
 	endpoint( int port )				{ set( "0", port ); }
 	endpoint( std::string ip, int port )		{ set( ip, port ); }
-	endpoint( std::string ip, int port, af fam)	{ set( ip, port, fam ); }
+	endpoint( std::string ip, int port, af fam )	{ set( ip, port, fam ); }
 
 	bool operator== ( endpoint& e )	{
 		if( getIP() == e.getIP() && getPort() == e.getPort() )
@@ -260,6 +269,10 @@ struct socket
 		#else
 			return ::closesocket( fd );
 		#endif
+	}
+
+	int shutdown( shut how )	{
+		return ::shutdown( fd, (int)how );
 	}
 
 	int setnonblocking( bool block )	{
