@@ -5,19 +5,13 @@ The following basic example shows how to create and bind a UDPSocket, TCPSocket 
 ```c++
 #include <xsocket>
 
-//for ipv4
-using namespace net::ip;
-
-//for ipv6
-//using namespace net::ipv6;
-
 int main( int argc, char** argv )	{
-	UDPSocket sock ( 61270 );
+	net::socket sock ( net::af::inet6, net::sock::dgram, 61270 );
 	if( !sock.isValid() )
 		return r;
 
 	string msg;
-	endpoint remote;
+	net::endpoint remote;
 
 	sock.recvfrom( &msg, &remote );
 
