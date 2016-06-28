@@ -2,11 +2,9 @@
 
 #include <iostream>
 
-using namespace net;
-
 
 int main()	{
-	ip::TCPSocket sock( 8080 );
+	net::socket sock( net::af::inet, net::sock::stream, 8080 );
 
 	if( !sock.isValid() )	{
 		std::cout << "error creating socket" << std::endl;
@@ -17,13 +15,20 @@ int main()	{
 
 	std::cout << "listening on port: " << sock.getlocaladdr().getPort() << std::endl;
 
-	ip::TCPSocket client;
-	ip::endpoint remoteAddr;
+	net::socket client;
+	net::endpoint remoteAddr;
 
 	while( true )	{
 		client = sock.accept( &remoteAddr );
 		if(client.isValid())	{
-			std::string msg = remoteAddr.asString();
+			std::stringstream ss;
+			ss << "HTTP/1.1 200 OK" << std::endl
+			   << "Content-Type: text/html"
+			   << std::endl
+			   << std::endl
+			   << remoteAddr.asString()
+			   << std::endl;
+			std::string msg = ss.str();
 			client.send( &msg );
 			client.close();
 		}
