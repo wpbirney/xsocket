@@ -1,6 +1,6 @@
 # xsocket
 
-The following basic example shows how to create and bind a UDPSocket, TCPSocket works the same
+The following basic example shows how to create and bind a inet6 udp socket
 
 ```c++
 #include <xsocket>
