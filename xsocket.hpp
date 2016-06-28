@@ -80,7 +80,7 @@ enum class shut	{
 };
 
 /*
- *	generic endpoint template class for uniform access to ipv4 and ipv6
+ *	generic endpoint class for uniform access to ipv4 and ipv6
  */
 
 struct endpoint

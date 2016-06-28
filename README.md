@@ -1,5 +1,21 @@
 # xsocket
 
+xsocket is a header only library, simply include it to use it `#include <xsocket>`
+
+# Platforms
+
+* Linux ( tested on Arch Linux with 4.6.3-1-ARCH g++/clang++ )
+* Windows ( only tested on Windows 10 with msys2 and VisualC++ )
+
+xsocket should work with most other platforms as well
+
+# Installing
+
+## Scons
+`sudo scons install` will install xsocket.hpp as /usr/include/xsocket
+
+# Example
+
 The following basic example shows how to create and bind a inet6 udp socket
 
 ```c++
