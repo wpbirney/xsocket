@@ -86,7 +86,7 @@ struct endpoint
 	endpoint( std::string ip, int port, af fam)	{ set( ip, port, fam ); }
 
 	bool operator== ( endpoint& e )	{
-		if( memcmp( &addr, &e, addrlen ) == 0 )
+		if( getIP() == e.getIP() && getPort() == e.getPort() )
 			return true;
 		return false;
 	}
