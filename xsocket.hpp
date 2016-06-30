@@ -102,9 +102,38 @@ struct endpoint
 
 	bool operator!= ( endpoint& e )	{ return !operator==( e ); }
 
+	//returns a vector of all possible endpoints for host:port for the specified sock_type and address family
+	static std::vector<endpoint> getEndpoints( const char* host, const char* service, sock type, af f=af::unspec )	{
+		addrinfo hints;
+		memset( &hints, 0, sizeof( addrinfo ) );
+		hints.ai_family = (int)f;
+		hints.ai_socktype = (int)type;
+
+		addrinfo *res, *rp;
+
+		if( host == nullptr )
+			hints.ai_flags = AI_PASSIVE;
+
+		getaddrinfo( host, service, &hints, &res );
+
+		std::vector<endpoint> buffer;
+
+		for( rp = res; rp != nullptr; rp = rp->ai_next )	{
+			endpoint ep;
+			memcpy( &ep.addr, rp->ai_addr, rp->ai_addrlen );
+			ep.addrlen = rp->ai_addrlen;
+			ep.addrfam = (af)rp->ai_family;
+			buffer.push_back( ep );
+		}
+
+		freeaddrinfo( res );
+
+		return buffer;
+	}
+
 	void set( std::string ip, int port, af f=af::unspec )	{
 		addrinfo hints;
-		memset(&hints, 0, sizeof(addrinfo));
+		memset( &hints, 0, sizeof(addrinfo) );
 		hints.ai_family = (int)f;
 
 		addrinfo *res, *rp;
@@ -119,6 +148,7 @@ struct endpoint
 
 		getaddrinfo( host, srv, &hints, &res );
 
+		//for now we just use the first result of getaddrinfo
 		if( res != nullptr )	{
 			memcpy( &addr, res->ai_addr, res->ai_addrlen );
 			addrlen = res->ai_addrlen;
