@@ -30,6 +30,7 @@ int main()	{
 			   << std::endl;
 			std::string msg = ss.str();
 			client.send( &msg );
+			client.shutdown( net::shut::wr );
 			client.close();
 		}
 	}
