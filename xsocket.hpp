@@ -132,30 +132,11 @@ struct endpoint
 	}
 
 	void set( std::string ip, int port, af f=af::unspec )	{
-		addrinfo hints;
-		memset( &hints, 0, sizeof(addrinfo) );
-		hints.ai_family = (int)f;
-
-		addrinfo *res, *rp;
 		const char *host = ip.c_str();
-		std::string p = std::to_string( port );
-		const char *srv = p.c_str();
-
-		if( ip == "0" )	{
-			hints.ai_flags = AI_PASSIVE;
+		if( ip == "0" )
 			host = nullptr;
-		}
-
-		getaddrinfo( host, srv, &hints, &res );
-
-		//for now we just use the first result of getaddrinfo
-		if( res != nullptr )	{
-			memcpy( &addr, res->ai_addr, res->ai_addrlen );
-			addrlen = res->ai_addrlen;
-			addrfam = (af)res->ai_family;
-		}
-
-		freeaddrinfo( res );
+		std::vector<endpoint> epList = endpoint::getEndpoints( host, std::to_string(port).c_str(), sock::dgram, f );
+		*this = epList[0];
 	}
 
 	std::string getIP()	{
