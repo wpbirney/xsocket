@@ -3,7 +3,9 @@
 
 int main()
 {
-	std::vector<net::endpoint> eps = net::endpoint::getEndpoints("www.google.com", "80", net::sock::stream);
+	net::init();
+
+	std::vector<net::endpoint> eps = net::endpoint::getEndpoints("www.google.com", "80", net::af::inet6);
 	for( net::endpoint &i : eps )	{
 		std::cout << i.asString() << std::endl;
 	}

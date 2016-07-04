@@ -4,6 +4,8 @@
 
 
 int main()	{
+	net::init();
+
 	net::socket sock( net::af::inet, net::sock::stream, 8080 );
 
 	if( !sock.isValid() )	{
