@@ -190,12 +190,15 @@ struct endpoint
 	af addrfam;
 };
 
+typedef std::vector<endpoint> endpointList;
+
 // getname calls getsockname/getpeername and returns it as an endpoint type
 inline endpoint getname(int fd, std::function<int(int,sockaddr*,socklen_t*)> target)
 {
 	endpoint ep;
 	socklen_t al = ep.getDataSize();
 	target(fd, ep.getData(), &al);
+	ep.addrlen = al;
 	return ep;
 }
 
