@@ -240,9 +240,13 @@ struct socket
 		return ::listen( fd, n );
 	}
 
+	int bind( endpoint ep )	{
+		return ::bind( fd, ep.getData(), ep.getDataSize() );
+	}
+
 	int bind( std::string addr, int port )	{
 		endpoint ep( addr, port, addrfam );
-		return ::bind( fd, ep.getData(), ep.getDataSize() );
+		return bind( ep );
 	}
 
 	int bind( int port )	{
