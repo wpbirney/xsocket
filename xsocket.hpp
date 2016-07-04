@@ -62,6 +62,14 @@ THE SOFTWARE.
 namespace net
 {
 
+void init()	{
+//no-op on *nix
+#ifdef _WIN32
+	if( !_wsaInitDone )
+		_initWinsock();
+#endif
+}
+
 enum class af	{
 	inet = AF_INET,
 	inet6 = AF_INET6,
@@ -171,7 +179,7 @@ inline endpoint getname(int fd, std::function<int(int,sockaddr*,socklen_t*)> tar
 {
 	endpoint ep;
 	socklen_t al = ep.getDataSize();
-	int i = target(fd, ep.getData(), &al);
+	target(fd, ep.getData(), &al);
 	return ep;
 }
 
@@ -199,10 +207,6 @@ struct socket
 	}
 
 	int init( af fam, sock socktype )	{
-		#ifdef _WIN32
-			if(!_wsaInitDone)
-				_initWinsock();
-		#endif
 		fd = ::socket( (int)fam, (int)socktype, 0);
 		addrfam = fam;
 		#ifdef XS_NONBLOCKING
