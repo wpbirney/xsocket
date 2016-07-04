@@ -63,7 +63,7 @@ THE SOFTWARE.
 namespace net
 {
 
-void init()	{
+inline void init()	{
 //no-op on *nix
 #ifdef _WIN32
 	if( !_wsaInitDone )
