@@ -23,6 +23,7 @@ THE SOFTWARE.
 #ifndef XSOCKET_HPP
 #define XSOCKET_HPP
 
+#include <iostream>
 #include <string>
 #include <sstream>
 #include <cstring> //memset
@@ -111,27 +112,42 @@ struct endpoint
 	bool operator!= ( endpoint& e )	{ return !operator==( e ); }
 
 	//returns a vector of all possible endpoints for host:port for the specified sock_type and address family
-	static std::vector<endpoint> getEndpoints( const char* host, const char* service, sock type, af f=af::unspec )	{
+	static std::vector<endpoint> getEndpoints( const char* host, const char* service, af f=af::unspec )	{
 		addrinfo hints;
 		memset( &hints, 0, sizeof( addrinfo ) );
 		hints.ai_family = (int)f;
-		hints.ai_socktype = (int)type;
+		hints.ai_socktype = 0;
 
 		addrinfo *res, *rp;
 
 		if( host == nullptr )
 			hints.ai_flags = AI_PASSIVE;
 
-		getaddrinfo( host, service, &hints, &res );
+		int i = getaddrinfo( host, service, &hints, &res );
 
 		std::vector<endpoint> buffer;
+
+		if( i != 0 )	{
+			std::cerr << "[xsocket]: " << gai_strerror( i ) << std::endl;
+			return buffer;
+		}
 
 		for( rp = res; rp != nullptr; rp = rp->ai_next )	{
 			endpoint ep;
 			memcpy( &ep.addr, rp->ai_addr, rp->ai_addrlen );
 			ep.addrlen = rp->ai_addrlen;
 			ep.addrfam = (af)rp->ai_family;
-			buffer.push_back( ep );
+
+			bool found = false;
+			for( endpoint &e : buffer )	{
+				if( e == ep )	{
+					found = true;
+					break;
+				}
+			}
+
+			if( !found )
+				buffer.push_back( ep );
 		}
 
 		freeaddrinfo( res );
@@ -143,7 +159,7 @@ struct endpoint
 		const char *host = ip.c_str();
 		if( ip == "0" )
 			host = nullptr;
-		std::vector<endpoint> epList = endpoint::getEndpoints( host, std::to_string(port).c_str(), sock::dgram, f );
+		std::vector<endpoint> epList = endpoint::getEndpoints( host, std::to_string(port).c_str(), f );
 		*this = epList[0];
 	}
 
