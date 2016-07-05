@@ -28,6 +28,7 @@ THE SOFTWARE.
 #include <sstream>
 #include <cstring> //memset
 #include <functional>
+#include <algorithm>
 #include <vector>
 
 #define XSOCK_VERSION	0x00
@@ -107,13 +108,13 @@ struct endpoint {
 		set( ip, port, fam );
 	}
 
-	bool operator== ( endpoint& e )	{
+	bool operator== ( const endpoint& e )	{
 		if( getIP() == e.getIP() && getPort() == e.getPort() )
 			return true;
 		return false;
 	}
 
-	bool operator!= ( endpoint& e )	{
+	bool operator!= ( const endpoint& e )	{
 		return !operator==( e );
 	}
 
@@ -144,15 +145,9 @@ struct endpoint {
 			ep.addrlen = rp->ai_addrlen;
 			ep.addrfam = (af)rp->ai_family;
 
-			bool found = false;
-			for( endpoint &e : buffer )	{
-				if( e == ep )	{
-					found = true;
-					break;
-				}
-			}
+			auto it = std::find( buffer.begin(), buffer.end(), ep );
 
-			if( !found )
+			if( it == buffer.end() )
 				buffer.push_back( ep );
 		}
 
@@ -169,12 +164,12 @@ struct endpoint {
 		*this = epList[0];
 	}
 
-	std::string getIP()	{
+	std::string getIP() const	{
 		std::vector<char> buf( INET6_ADDRSTRLEN );
 		getnameinfo( (sockaddr*)&addr, getDataSize(), buf.data(), buf.size(), nullptr, 0, NI_NUMERICHOST );
 		return std::string( buf.begin(), buf.end() );
 	}
-	int getPort()		{
+	int getPort() const	{
 		std::vector<char> buf( INET6_ADDRSTRLEN );
 		getnameinfo( (sockaddr*)&addr, getDataSize(), nullptr, 0, buf.data(), buf.size(), NI_NUMERICSERV );
 		return std::atoi( std::string(buf.begin(), buf.end()).c_str() );
@@ -187,7 +182,7 @@ struct endpoint {
 	sockaddr* getData()	{
 		return (sockaddr*)&addr;
 	}
-	int getDataSize()	{
+	int getDataSize() const	{
 		return addrlen;
 	}
 
