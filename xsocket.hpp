@@ -175,18 +175,18 @@ struct endpoint {
 		return std::atoi( std::string(buf.begin(), buf.end()).c_str() );
 	}
 
-	af getAF()	{
+	af getAF() const	{
 		return addrfam;
 	}
 
-	sockaddr* getData()	{
+	sockaddr* getData() const	{
 		return (sockaddr*)&addr;
 	}
 	int getDataSize() const	{
 		return addrlen;
 	}
 
-	std::string asString()	{
+	std::string asString()const	{
 		std::stringstream ss;
 		ss << getIP() << ":" << getPort();
 		return ss.str();
