@@ -37,31 +37,30 @@ THE SOFTWARE.
 
 //cross platform includes
 #ifndef _WIN32
-	#include <sys/socket.h>
-	#include <arpa/inet.h>
-	#include <netinet/in.h>
-	#include <fcntl.h>
-	#include <unistd.h>
-	#include <netdb.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <netdb.h>
 #else
-	//#define _WIN32_WINNT 0x0600
-	#include <winsock2.h>
-	#include <ws2tcpip.h>
-	typedef int socklen_t;
-	static WSAData _wsaData;
-	static bool _wsaInitDone = false;
-	inline void _initWinsock()	{
-		WSAStartup(MAKEWORD(2,2), &_wsaData);
-		_wsaInitDone = true;
-	}
-	#define SHUT_RD SD_RECEIVE
-	#define SHUT_WR	SD_SEND
-	#define SHUT_RDWR SD_BOTH
+//#define _WIN32_WINNT 0x0600
+#include <winsock2.h>
+#include <ws2tcpip.h>
+typedef int socklen_t;
+static WSAData _wsaData;
+static bool _wsaInitDone = false;
+inline void _initWinsock()	{
+	WSAStartup(MAKEWORD(2,2), &_wsaData);
+	_wsaInitDone = true;
+}
+#define SHUT_RD SD_RECEIVE
+#define SHUT_WR	SD_SEND
+#define SHUT_RDWR SD_BOTH
 #endif
 
 
-namespace net
-{
+namespace net {
 
 inline void init()	{
 //no-op on *nix
@@ -92,16 +91,21 @@ enum class shut	{
  *	generic endpoint class for uniform access to ipv4 and ipv6
  */
 
-struct endpoint
-{
+struct endpoint {
 	endpoint()	{
 		memset( &addr, 0, sizeof( sockaddr_storage ) );
 		addrlen = sizeof( sockaddr_storage );
 	}
 
-	endpoint( int port )				{ set( "0", port ); }
-	endpoint( std::string ip, int port )		{ set( ip, port ); }
-	endpoint( std::string ip, int port, af fam )	{ set( ip, port, fam ); }
+	endpoint( int port )				{
+		set( "0", port );
+	}
+	endpoint( std::string ip, int port )		{
+		set( ip, port );
+	}
+	endpoint( std::string ip, int port, af fam )	{
+		set( ip, port, fam );
+	}
 
 	bool operator== ( endpoint& e )	{
 		if( getIP() == e.getIP() && getPort() == e.getPort() )
@@ -109,7 +113,9 @@ struct endpoint
 		return false;
 	}
 
-	bool operator!= ( endpoint& e )	{ return !operator==( e ); }
+	bool operator!= ( endpoint& e )	{
+		return !operator==( e );
+	}
 
 	//returns a vector of all possible endpoints for host:port for the specified sock_type and address family
 	static std::vector<endpoint> getEndpoints( const char* host, const char* service, af f=af::unspec )	{
@@ -174,10 +180,16 @@ struct endpoint
 		return std::atoi( std::string(buf.begin(), buf.end()).c_str() );
 	}
 
-	af getAF()	{ return addrfam; }
+	af getAF()	{
+		return addrfam;
+	}
 
-	sockaddr* getData()	{ return (sockaddr*)&addr; }
-	int getDataSize()	{ return addrlen; }
+	sockaddr* getData()	{
+		return (sockaddr*)&addr;
+	}
+	int getDataSize()	{
+		return addrlen;
+	}
 
 	std::string asString()	{
 		std::stringstream ss;
@@ -193,8 +205,7 @@ struct endpoint
 typedef std::vector<endpoint> endpointList;
 
 // getname calls getsockname/getpeername and returns it as an endpoint type
-inline endpoint getname(int fd, std::function<int(int,sockaddr*,socklen_t*)> target)
-{
+inline endpoint getname(int fd, std::function<int(int,sockaddr*,socklen_t*)> target) {
 	endpoint ep;
 	socklen_t al = ep.getDataSize();
 	target(fd, ep.getData(), &al);
@@ -206,11 +217,14 @@ inline endpoint getname(int fd, std::function<int(int,sockaddr*,socklen_t*)> tar
  *	base socket class
  */
 
-struct socket
-{
-	socket()	{ fd = -1; }
+struct socket {
+	socket()	{
+		fd = -1;
+	}
 
-	socket( af fam, sock socktype )	{ init( fam, socktype ); }
+	socket( af fam, sock socktype )	{
+		init( fam, socktype );
+	}
 
 	socket( af fam, sock socktype, int port ) : socket( fam, socktype )	{
 		int r = bind( port );
@@ -228,9 +242,9 @@ struct socket
 	int init( af fam, sock socktype )	{
 		fd = ::socket( (int)fam, (int)socktype, 0);
 		addrfam = fam;
-		#ifdef XS_NONBLOCKING
-			setnonblocking( true );
-		#endif
+#ifdef XS_NONBLOCKING
+		setnonblocking( true );
+#endif
 		return fd;
 	}
 
@@ -302,11 +316,11 @@ struct socket
 	}
 
 	int close()	{
-		#ifndef _WIN32
-			return ::close( fd );
-		#else
-			return ::closesocket( fd );
-		#endif
+#ifndef _WIN32
+		return ::close( fd );
+#else
+		return ::closesocket( fd );
+#endif
 	}
 
 	int shutdown( shut how )	{
@@ -314,25 +328,25 @@ struct socket
 	}
 
 	int setnonblocking( bool block )	{
-		#ifndef _WIN32
-			return fcntl( fd, F_SETFL, O_NONBLOCK, block );
-		#else
-			DWORD nb = (int)block;
-			return ioctlsocket( fd,  FIONBIO,  &nb );
-		#endif
+#ifndef _WIN32
+		return fcntl( fd, F_SETFL, O_NONBLOCK, block );
+#else
+		DWORD nb = (int)block;
+		return ioctlsocket( fd,  FIONBIO,  &nb );
+#endif
 	}
 
 	// TODO: implement the timeout for windows
 	int settimeout( int sec, int us )	{
-		#ifndef _WIN32
-			timeval tv;
-			tv.tv_sec = sec;
-			tv.tv_usec = us;
-			int i = setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
-			return i;
-		#else
-			return -1;
-		#endif
+#ifndef _WIN32
+		timeval tv;
+		tv.tv_sec = sec;
+		tv.tv_usec = us;
+		int i = setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+		return i;
+#else
+		return -1;
+#endif
 	}
 
 	endpoint getlocaladdr()	{
@@ -343,7 +357,9 @@ struct socket
 		return getname(fd, getpeername);
 	}
 
-	int getError()	{ return errno; }
+	int getError()	{
+		return errno;
+	}
 
 	bool isValid()	{
 		if( fd != -1 )
@@ -351,7 +367,7 @@ struct socket
 		return false;
 	}
 
-private:
+  private:
 	int fd;
 	af addrfam;
 };
