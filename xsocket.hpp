@@ -268,11 +268,11 @@ struct socket {
 		return ::listen( fd, n );
 	}
 
-	int bind( endpoint ep )	{
+	int bind( const endpoint ep )	{
 		return ::bind( fd, ep.getData(), ep.getDataSize() );
 	}
 
-	int bind( std::string addr, int port )	{
+	int bind( const std::string addr, int port )	{
 		endpoint ep( addr, port, addrfam );
 		return bind( ep );
 	}
@@ -281,7 +281,7 @@ struct socket {
 		return bind( "0", port );
 	}
 
-	int connect( endpoint ep )	{
+	int connect( const endpoint ep )	{
 		return ::connect( fd, ep.getData(), ep.getDataSize() );
 	}
 
@@ -362,19 +362,19 @@ struct socket {
 #endif
 	}
 
-	endpoint getlocaladdr()	{
+	endpoint getlocaladdr()	const {
 		return getname(fd, getsockname, addrfam );
 	}
 
-	endpoint getremoteaddr()	{
+	endpoint getremoteaddr() const	{
 		return getname(fd, getpeername, addrfam );
 	}
 
-	int getError()	{
+	int getError() const	{
 		return errno;
 	}
 
-	bool isValid()	{
+	bool isValid() const	{
 		if( fd != -1 )
 			return true;
 		return false;
