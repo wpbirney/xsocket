@@ -109,7 +109,7 @@ struct endpoint {
 	}
 
 	bool operator== ( const endpoint& e )	{
-		if( getIP() == e.getIP() && getPort() == e.getPort() )
+		if( memcmp( &addr, e.getData(), e.getDataSize() ) == 0 )
 			return true;
 		return false;
 	}
@@ -142,8 +142,7 @@ struct endpoint {
 		for( rp = res; rp != nullptr; rp = rp->ai_next )	{
 			endpoint ep;
 			memcpy( &ep.addr, rp->ai_addr, rp->ai_addrlen );
-			ep.addrlen = rp->ai_addrlen;
-			ep.addrfam = (af)rp->ai_family;
+			ep.initFromRaw( rp->ai_addrlen, (af)rp->ai_family );
 
 			auto it = std::find( buffer.begin(), buffer.end(), ep );
 
@@ -164,15 +163,30 @@ struct endpoint {
 		*this = epList[0];
 	}
 
-	std::string getIP() const	{
-		std::vector<char> buf( INET6_ADDRSTRLEN );
-		getnameinfo( (sockaddr*)&addr, getDataSize(), buf.data(), buf.size(), nullptr, 0, NI_NUMERICHOST );
-		return std::string( buf.begin(), buf.end() );
+	//must be called after you manually write into addr
+	void initFromRaw( socklen_t alen, af fam )	{
+		addrlen = alen;
+		addrfam = fam;
 	}
+
+	std::string getHost( int flags=0 ) const	{
+		char hostbuf[INET6_ADDRSTRLEN];
+		getnameinfo( (sockaddr*)&addr, getDataSize(), &hostbuf[0], INET6_ADDRSTRLEN, nullptr, 0, flags );
+		return &hostbuf[0];
+	}
+
+	std::string getIP() const	{
+		return getHost( NI_NUMERICHOST );
+	}
+
+	std::string getService( int flags=0 ) const	{
+		char servbuf[INET6_ADDRSTRLEN];
+		getnameinfo( (sockaddr*)&addr, getDataSize(), nullptr, 0, &servbuf[0], INET6_ADDRSTRLEN, flags );
+		return &servbuf[0];
+	}
+
 	int getPort() const	{
-		std::vector<char> buf( INET6_ADDRSTRLEN );
-		getnameinfo( (sockaddr*)&addr, getDataSize(), nullptr, 0, buf.data(), buf.size(), NI_NUMERICSERV );
-		return std::atoi( std::string(buf.begin(), buf.end()).c_str() );
+		return std::atoi( getService( NI_NUMERICSERV ).c_str() );
 	}
 
 	af getAF() const	{
@@ -200,11 +214,11 @@ struct endpoint {
 typedef std::vector<endpoint> endpointList;
 
 // getname calls getsockname/getpeername and returns it as an endpoint type
-inline endpoint getname(int fd, std::function<int(int,sockaddr*,socklen_t*)> target) {
+inline endpoint getname(int fd, std::function<int(int,sockaddr*,socklen_t*)> target, af fam) {
 	endpoint ep;
 	socklen_t al = ep.getDataSize();
 	target(fd, ep.getData(), &al);
-	ep.addrlen = al;
+	ep.initFromRaw( al, fam );
 	return ep;
 }
 
@@ -245,7 +259,9 @@ struct socket {
 
 	int accept( endpoint* ep )	{
 		socklen_t al = ep->getDataSize();
-		return ::accept( fd, ep->getData(), &al );
+		int i = ::accept( fd, ep->getData(), &al );
+		ep->initFromRaw( al, addrfam );
+		return i;
 	}
 
 	int listen( int n )	{
@@ -279,7 +295,9 @@ struct socket {
 
 	int recvfrom( char* buf, int len, endpoint* ep )	{
 		socklen_t al = ep->getDataSize();
-		return ::recvfrom( fd, buf, len, 0, ep->getData(), &al );
+		int i = ::recvfrom( fd, buf, len, 0, ep->getData(), &al );
+		ep->initFromRaw( al, addrfam );
+		return i;
 	}
 
 	int recvfrom( std::string* buf, int len, endpoint* ep )	{
@@ -345,11 +363,11 @@ struct socket {
 	}
 
 	endpoint getlocaladdr()	{
-		return getname(fd, getsockname);
+		return getname(fd, getsockname, addrfam );
 	}
 
 	endpoint getremoteaddr()	{
-		return getname(fd, getpeername);
+		return getname(fd, getpeername, addrfam );
 	}
 
 	int getError()	{
