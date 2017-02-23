@@ -45,16 +45,11 @@ THE SOFTWARE.
 #include <unistd.h>
 #include <netdb.h>
 #else
-//#define _WIN32_WINNT 0x0600
 #include <winsock2.h>
 #include <ws2tcpip.h>
 typedef int socklen_t;
 static WSAData _wsaData;
 static bool _wsaInitDone = false;
-inline void _initWinsock()	{
-	WSAStartup(MAKEWORD(2,2), &_wsaData);
-	_wsaInitDone = true;
-}
 #define SHUT_RD SD_RECEIVE
 #define SHUT_WR	SD_SEND
 #define SHUT_RDWR SD_BOTH
@@ -66,8 +61,10 @@ namespace net {
 inline void init()	{
 //no-op on *nix
 #ifdef _WIN32
-	if( !_wsaInitDone )
-		_initWinsock();
+	if( !_wsaInitDone ) {
+		WSAStartup(MAKEWORD(2,2), &_wsaData);
+		_wsaInitDone = true;
+	}
 #endif
 }
 
