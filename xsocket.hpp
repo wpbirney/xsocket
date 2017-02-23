@@ -27,7 +27,6 @@ THE SOFTWARE.
 #include <string>
 #include <sstream>
 #include <cstring> //memset
-#include <functional>
 #include <algorithm>
 #include <vector>
 
@@ -117,6 +116,7 @@ struct endpoint {
 
 	//returns a vector of all possible endpoints for host:port for the specified sock_type and address family
 	static std::vector<endpoint> getEndpoints( const char* host, const char* service, af f=af::unspec )	{
+
 		addrinfo hints;
 		memset( &hints, 0, sizeof( addrinfo ) );
 		hints.ai_family = (int)f;
@@ -208,10 +208,9 @@ struct endpoint {
 	af addrfam;
 };
 
-typedef std::vector<endpoint> endpointList;
-
 // getname calls getsockname/getpeername and returns it as an endpoint type
-inline endpoint getname(int fd, std::function<int(int,sockaddr*,socklen_t*)> target, af fam) {
+template< typename t >
+inline endpoint getname(int fd, t target, af fam) {
 	endpoint ep;
 	socklen_t al = ep.getDataSize();
 	target(fd, ep.getData(), &al);
