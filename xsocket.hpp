@@ -30,6 +30,7 @@ THE SOFTWARE.
 #include <algorithm>
 #include <vector>
 
+//NOT READY FOR PRODUCTION USE BY ANY MEANS, so keep this 0x00 until otherwise
 #define XSOCK_VERSION	0x00
 
 //Defaults all sockets to nonblocking
@@ -281,22 +282,22 @@ struct socket {
 		return ::connect( fd, ep.getData(), ep.getDataSize() );
 	}
 
-	int sendto( char* data, int len, endpoint ep )	{
+	std::size_t sendto( const char* data, std::size_t len, endpoint ep )	{
 		return ::sendto( fd, data, len, 0, ep.getData(), ep.getDataSize() );
 	}
 
-	int sendto( std::string* data, endpoint ep )	{
-		return sendto( (char*)data->c_str(), data->size(), ep );
+	std::size_t sendto( const std::string* data, endpoint ep )	{
+		return sendto( data->c_str(), data->size(), ep );
 	}
 
-	int recvfrom( char* buf, int len, endpoint* ep )	{
+	std::size_t recvfrom( char* buf, std::size_t len, endpoint* ep )	{
 		socklen_t al = ep->getDataSize();
 		int i = ::recvfrom( fd, buf, len, 0, ep->getData(), &al );
 		ep->initFromRaw( al, addrfam );
 		return i;
 	}
 
-	int recvfrom( std::string* buf, int len, endpoint* ep )	{
+	std::size_t recvfrom( std::string* buf, std::size_t len, endpoint* ep )	{
 		std::vector<char> buffer( len );
 		int r = recvfrom( buffer.data(), buffer.size(), ep );
 		if( r > 0 )
@@ -304,19 +305,19 @@ struct socket {
 		return r;
 	}
 
-	int send( char* data, int len )	{
+	std::size_t send( char* data, std::size_t len )	{
 		return ::send( fd, data, len, 0 );
 	}
 
-	int send( std::string* data )	{
+	std::size_t send( const std::string* data )	{
 		return send( (char*)data->c_str(), data->size() );
 	}
 
-	int recv( char* buf, int len )	{
+	std::size_t recv( char* buf, std::size_t len )	{
 		return ::recv( fd, buf, len, 0 );
 	}
 
-	int recv( std::string* buf, int len )	{
+	std::size_t recv( std::string* buf, std::size_t len )	{
 		std::vector<char> buffer( len );
 		int r = recv( buffer.data(), buffer.size() );
 		if( r > 0 )
