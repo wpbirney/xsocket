@@ -118,24 +118,24 @@ struct endpoint {
 	//returns a vector of all possible endpoints for host:port for the specified sock_type and address family
 	static std::vector<endpoint> getEndpoints( const char* host, const char* service, af f=af::unspec )	{
 
+		//set up our addrinfo hints for the getaddrinfo call
 		addrinfo hints;
 		memset( &hints, 0, sizeof( addrinfo ) );
 		hints.ai_family = (int)f;
 		hints.ai_socktype = 0;
-
-		addrinfo *res, *rp;
-
+		//if host is nullptr, we need to set AI_PASSIVE, meaning its meant for binding
+		//TODO: fix so we can bind to a specific address and still mark as passive
 		if( host == nullptr )
 			hints.ai_flags = AI_PASSIVE;
 
+		addrinfo *res, *rp;
+
 		int i = getaddrinfo( host, service, &hints, &res );
+		if( i != 0 )	{
+			throw std::runtime_error(gai_strerror( i ));
+		}
 
 		std::vector<endpoint> buffer;
-
-		if( i != 0 )	{
-			std::cerr << "[xsocket]: " << gai_strerror( i ) << std::endl;
-			return buffer;
-		}
 
 		for( rp = res; rp != nullptr; rp = rp->ai_next )	{
 			endpoint ep;
