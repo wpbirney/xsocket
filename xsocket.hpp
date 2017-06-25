@@ -194,6 +194,7 @@ struct endpoint {
 	sockaddr* getData() const	{
 		return (sockaddr*)&addr;
 	}
+
 	int getDataSize() const	{
 		return addrlen;
 	}
@@ -270,8 +271,7 @@ struct socket {
 	}
 
 	int bind( const std::string addr, int port )	{
-		endpoint ep( addr, port, addrfam );
-		return bind( ep );
+		return bind( endpoint( addr, port, addrfam ) );
 	}
 
 	int bind( int port )	{
