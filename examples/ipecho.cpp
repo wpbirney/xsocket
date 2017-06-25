@@ -1,7 +1,9 @@
+/*
+ *	the following example demonstrates a very basic tcp ip echo server using the xsocket library
+ */
+
 #include "../xsocket.hpp"
-
 #include <iostream>
-
 
 int main()	{
 
