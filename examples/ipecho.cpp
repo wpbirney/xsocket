@@ -34,9 +34,7 @@ int main()	{
 
 		//verify that sock.accept did not fail
 		if(client.isValid())	{
-			std::stringstream ss;
-			ss << remoteAddr.getIP() << std::endl;
-			std::string msg = ss.str();
+			std::string msg = remoteAddr.getIP();
 			client.send( &msg );
 			client.close();
 		}
