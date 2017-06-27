@@ -210,15 +210,7 @@ struct endpoint {
 	af addrfam;
 };
 
-// getname calls getsockname/getpeername and returns it as an endpoint type
-template< typename t >
-inline endpoint getname(int fd, t target, af fam) {
-	endpoint ep;
-	socklen_t al = ep.getDataSize();
-	target(fd, ep.getData(), &al);
-	ep.initFromRaw( al, fam );
-	return ep;
-}
+
 
 /*
  *	base socket class
@@ -386,6 +378,17 @@ struct socket {
 	}
 
   private:
+
+	// getname calls getsockname/getpeername and returns it as an endpoint type
+	template< typename t >
+	inline endpoint getname(int fd, t target, af fam) const {
+		endpoint ep;
+		socklen_t al = ep.getDataSize();
+		target(fd, ep.getData(), &al);
+		ep.initFromRaw( al, fam );
+		return ep;
+	}
+
 	int fd;
 	af addrfam;
 };
