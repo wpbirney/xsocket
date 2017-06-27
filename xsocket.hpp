@@ -286,6 +286,10 @@ struct socket {
 		return ::sendto( fd, data, len, 0, ep.getData(), ep.getDataSize() );
 	}
 
+	std::size_t sendto( const std::vector<char>& data, endpoint ep )	{
+		return sendto( data.data(), data.size(), ep );
+	}
+
 	std::size_t sendto( const std::string* data, endpoint ep )	{
 		return sendto( data->c_str(), data->size(), ep );
 	}
@@ -305,8 +309,12 @@ struct socket {
 		return r;
 	}
 
-	std::size_t send( char* data, std::size_t len )	{
+	std::size_t send( const char* data, std::size_t len )	{
 		return ::send( fd, data, len, 0 );
+	}
+
+	std::size_t send( const std::vector<char>& data )	{
+		return send( data.data(), data.size() );
 	}
 
 	std::size_t send( const std::string* data )	{
