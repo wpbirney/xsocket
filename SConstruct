@@ -7,7 +7,7 @@ print('Target Platform = ' + sys.platform)
 cxx = ARGUMENTS.get('CXX', 'g++')
 prefix = ARGUMENTS.get('PREFIX', '/usr/include')
 
-env = Environment(CXX=cxx, CPPFLAGS=['-std=c++11', '-Wall'], CPPPATH='.', PREFIX=prefix)
+env = Environment(CXX=cxx, CPPFLAGS=['-std=c++17', '-Wall'], CPPPATH='.', PREFIX=prefix)
 
 if sys.platform == 'win32' or sys.platform == 'msys' or 'mingw' in cxx:
     env.Append(LIBS=['ws2_32'], LINKFLAGS=['-static', '-static-libstdc++'])
