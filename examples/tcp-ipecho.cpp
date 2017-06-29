@@ -22,7 +22,7 @@ int main()	{
 	//we must call listen before a call to accept
 	sock.listen( 5 );
 
-	std::cout << "listening on port: " << sock.getlocaladdr().getPort() << std::endl;
+	std::cout << "listening on port: " << sock.getlocaladdr().get_port() << std::endl;
 
 	net::socket client;
 	net::endpoint remoteAddr;
@@ -34,7 +34,7 @@ int main()	{
 
 		//verify that sock.accept did not fail
 		if(client.isValid())	{
-			std::string msg = remoteAddr.getIP();
+			std::string msg = remoteAddr.get_ip();
 			client.send( &msg );
 			client.close();
 		}

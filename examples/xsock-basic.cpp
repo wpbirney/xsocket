@@ -32,7 +32,7 @@ int main()
 
 	//we can access a sockets local endpoint by getlocaladdr() && getremoteaddr() for tcp peers
 	std::cout << "listening at: " << v6s.getlocaladdr().to_string() << std::endl
-		  << "send a udp packet to :: " << v6s.getlocaladdr().getPort() << " to continue" << std::endl;
+		  << "send a udp packet to :: " << v6s.getlocaladdr().get_port() << " to continue" << std::endl;
 
 	//we can recv directly into a std::string or a char* buffer
 	std::string buff;

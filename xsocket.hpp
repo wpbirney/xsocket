@@ -106,7 +106,7 @@ struct endpoint {
 	}
 
 	bool operator== ( const endpoint& e )	{
-		if( memcmp( &addr, e.getData(), e.getDataSize() ) == 0 )
+		if( memcmp( &addr, e.data(), e.size() ) == 0 )
 			return true;
 		return false;
 	}
@@ -165,41 +165,41 @@ struct endpoint {
 		addrfam = fam;
 	}
 
-	std::string getHost( int flags=0 ) const	{
+	std::string get_host( int flags=0 ) const	{
 		char hostbuf[INET6_ADDRSTRLEN];
-		getnameinfo( (sockaddr*)&addr, getDataSize(), &hostbuf[0], INET6_ADDRSTRLEN, nullptr, 0, flags );
+		getnameinfo( (sockaddr*)&addr, size(), &hostbuf[0], INET6_ADDRSTRLEN, nullptr, 0, flags );
 		return &hostbuf[0];
 	}
 
-	std::string getIP() const	{
-		return getHost( NI_NUMERICHOST );
+	std::string get_ip() const	{
+		return get_host( NI_NUMERICHOST );
 	}
 
-	std::string getService( int flags=0 ) const	{
+	std::string get_service( int flags=0 ) const	{
 		char servbuf[INET6_ADDRSTRLEN];
-		getnameinfo( (sockaddr*)&addr, getDataSize(), nullptr, 0, &servbuf[0], INET6_ADDRSTRLEN, flags );
+		getnameinfo( (sockaddr*)&addr, size(), nullptr, 0, &servbuf[0], INET6_ADDRSTRLEN, flags );
 		return &servbuf[0];
 	}
 
-	int getPort() const	{
-		return std::atoi( getService( NI_NUMERICSERV ).c_str() );
+	int get_port() const	{
+		return std::atoi( get_service( NI_NUMERICSERV ).c_str() );
 	}
 
-	af getAF() const	{
+	af get_af() const	{
 		return addrfam;
 	}
 
-	sockaddr* getData() const	{
+	sockaddr* data() const	{
 		return (sockaddr*)&addr;
 	}
 
-	int getDataSize() const	{
+	int size() const	{
 		return addrlen;
 	}
 
 	std::string to_string() const	{
 		std::stringstream ss;
-		ss << getIP() << ":" << getPort();
+		ss << get_ip() << ":" << get_port();
 		return ss.str();
 	}
 
@@ -246,8 +246,8 @@ struct socket {
 	}
 
 	int accept( endpoint* ep )	{
-		socklen_t al = ep->getDataSize();
-		int i = ::accept( fd, ep->getData(), &al );
+		socklen_t al = ep->size();
+		int i = ::accept( fd, ep->data(), &al );
 		ep->initialize( al, addrfam );
 		return i;
 	}
@@ -257,7 +257,7 @@ struct socket {
 	}
 
 	int bind( const endpoint ep )	{
-		return ::bind( fd, ep.getData(), ep.getDataSize() );
+		return ::bind( fd, ep.data(), ep.size() );
 	}
 
 	int bind( const std::string addr, int port )	{
@@ -269,11 +269,11 @@ struct socket {
 	}
 
 	int connect( const endpoint ep )	{
-		return ::connect( fd, ep.getData(), ep.getDataSize() );
+		return ::connect( fd, ep.data(), ep.size() );
 	}
 
 	std::size_t sendto( const char* data, std::size_t len, endpoint ep )	{
-		return ::sendto( fd, data, len, 0, ep.getData(), ep.getDataSize() );
+		return ::sendto( fd, data, len, 0, ep.data(), ep.size() );
 	}
 
 	std::size_t sendto( const std::vector<char>& data, endpoint ep )	{
@@ -285,8 +285,8 @@ struct socket {
 	}
 
 	std::size_t recvfrom( char* buf, std::size_t len, endpoint* ep )	{
-		socklen_t al = ep->getDataSize();
-		int i = ::recvfrom( fd, buf, len, 0, ep->getData(), &al );
+		socklen_t al = ep->size();
+		int i = ::recvfrom( fd, buf, len, 0, ep->data(), &al );
 		ep->initialize( al, addrfam );
 		return i;
 	}
@@ -381,8 +381,8 @@ struct socket {
 	template< typename t >
 	inline endpoint getname(int fd, t target, af fam) const {
 		endpoint ep;
-		socklen_t al = ep.getDataSize();
-		target(fd, ep.getData(), &al);
+		socklen_t al = ep.size();
+		target(fd, ep.data(), &al);
 		ep.initialize( al, fam );
 		return ep;
 	}

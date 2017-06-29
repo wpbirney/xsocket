@@ -19,7 +19,7 @@ int main()	{
 		return -1;
 	}
 
-	std::cout << "listening on port: " << sock.getlocaladdr().getPort() << std::endl;
+	std::cout << "listening on port: " << sock.getlocaladdr().get_port() << std::endl;
 
 	net::endpoint remoteAddr;
 	std::string buf;
@@ -30,7 +30,7 @@ int main()	{
 		int r = sock.recvfrom( &buf, 1024, &remoteAddr );
 
 		if( r > 0 && buf == "ip\n" )	{
-			std::string msg = remoteAddr.getIP();
+			std::string msg = remoteAddr.get_ip();
 			sock.sendto( &msg, remoteAddr );
 		}
 	}
