@@ -12,7 +12,7 @@ int main()
 	net::init();
 
 	//get a vector of possible endpoints for google.com:80, af::unspec allows both ipv4 and ipv6
-	auto eps = net::endpoint::getEndpoints("www.google.com", "80", net::af::unspec);
+	auto eps = net::endpoint::resolve("www.google.com", "80", net::af::unspec);
 
 	std::cout << "the following endpoints were returned for www.google.com:80" << std::endl;
 	for( net::endpoint &i : eps )	{

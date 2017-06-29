@@ -116,15 +116,15 @@ struct endpoint {
 	}
 
 	//returns a vector of all possible endpoints for host:port for the specified sock_type and address family
-	static std::vector<endpoint> getEndpoints( const char* host, const char* service, af f=af::unspec )	{
+	static std::vector<endpoint> resolve( const char* host, const char* service, af f=af::unspec )	{
 
 		//set up our addrinfo hints for the getaddrinfo call
 		addrinfo hints;
 		memset( &hints, 0, sizeof( addrinfo ) );
 		hints.ai_family = (int)f;
 		hints.ai_socktype = 0;
+
 		//if host is nullptr, we need to set AI_PASSIVE, meaning its meant for binding
-		//TODO: fix so we can bind to a specific address and still mark as passive
 		if( host == nullptr )
 			hints.ai_flags = AI_PASSIVE;
 
@@ -142,9 +142,7 @@ struct endpoint {
 			memcpy( &ep.addr, rp->ai_addr, rp->ai_addrlen );
 			ep.initFromRaw( rp->ai_addrlen, (af)rp->ai_family );
 
-			auto it = std::find( buffer.begin(), buffer.end(), ep );
-
-			if( it == buffer.end() )
+			if( std::find( buffer.begin(), buffer.end(), ep ) == buffer.end() )
 				buffer.push_back( ep );
 		}
 
@@ -157,7 +155,7 @@ struct endpoint {
 		const char *host = ip.c_str();
 		if( ip == "0" )
 			host = nullptr;
-		std::vector<endpoint> epList = endpoint::getEndpoints( host, std::to_string(port).c_str(), f );
+		std::vector<endpoint> epList = endpoint::resolve( host, std::to_string(port).c_str(), f );
 		*this = epList[0];
 	}
 
