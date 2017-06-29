@@ -140,7 +140,7 @@ struct endpoint {
 		for( rp = res; rp != nullptr; rp = rp->ai_next )	{
 			endpoint ep;
 			memcpy( &ep.addr, rp->ai_addr, rp->ai_addrlen );
-			ep.initFromRaw( rp->ai_addrlen, (af)rp->ai_family );
+			ep.initialize( rp->ai_addrlen, (af)rp->ai_family );
 
 			if( std::find( buffer.begin(), buffer.end(), ep ) == buffer.end() )
 				buffer.push_back( ep );
@@ -160,7 +160,7 @@ struct endpoint {
 	}
 
 	//must be called after you manually write into addr
-	void initFromRaw( socklen_t alen, af fam )	{
+	void initialize( socklen_t alen, af fam )	{
 		addrlen = alen;
 		addrfam = fam;
 	}
@@ -248,7 +248,7 @@ struct socket {
 	int accept( endpoint* ep )	{
 		socklen_t al = ep->getDataSize();
 		int i = ::accept( fd, ep->getData(), &al );
-		ep->initFromRaw( al, addrfam );
+		ep->initialize( al, addrfam );
 		return i;
 	}
 
@@ -287,7 +287,7 @@ struct socket {
 	std::size_t recvfrom( char* buf, std::size_t len, endpoint* ep )	{
 		socklen_t al = ep->getDataSize();
 		int i = ::recvfrom( fd, buf, len, 0, ep->getData(), &al );
-		ep->initFromRaw( al, addrfam );
+		ep->initialize( al, addrfam );
 		return i;
 	}
 
@@ -383,7 +383,7 @@ struct socket {
 		endpoint ep;
 		socklen_t al = ep.getDataSize();
 		target(fd, ep.getData(), &al);
-		ep.initFromRaw( al, fam );
+		ep.initialize( al, fam );
 		return ep;
 	}
 
