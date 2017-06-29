@@ -116,7 +116,7 @@ struct endpoint {
 	}
 
 	//returns a vector of all possible endpoints for host:port for the specified sock_type and address family
-	static std::vector<endpoint> resolve( const char* host, const char* service, af f=af::unspec )	{
+	static std::vector<endpoint> resolve( const char* host, const char* service, af f )	{
 
 		//set up our addrinfo hints for the getaddrinfo call
 		addrinfo hints;
