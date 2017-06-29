@@ -16,7 +16,7 @@ int main()
 
 	std::cout << "the following endpoints were returned for www.google.com:80" << std::endl;
 	for( net::endpoint &i : eps )	{
-		std::cout << i.asString() << std::endl;
+		std::cout << i.to_string() << std::endl;
 	}
 
 	std::cout << std::endl << std::endl;
@@ -31,7 +31,7 @@ int main()
 	std::cout << "ipv6 socket created..." << std::endl;
 
 	//we can access a sockets local endpoint by getlocaladdr() && getremoteaddr() for tcp peers
-	std::cout << "listening at: " << v6s.getlocaladdr().asString() << std::endl
+	std::cout << "listening at: " << v6s.getlocaladdr().to_string() << std::endl
 		  << "send a udp packet to :: " << v6s.getlocaladdr().getPort() << " to continue" << std::endl;
 
 	//we can recv directly into a std::string or a char* buffer
@@ -41,7 +41,7 @@ int main()
 	//recv a packet up to 512 bytes and store the sender in endpoint ep
 	v6s.recvfrom( &buff, 512, &ep );
 	std::cout << buff << std::endl;
-	std::cout << ep.asString() << std::endl;
+	std::cout << ep.to_string() << std::endl;
 	v6s.close();
 
 	//create a socket without binding in the ctor
@@ -55,13 +55,13 @@ int main()
 		return -1;
 	}
 
-	std::cout << "socket bound to: " << sock.getlocaladdr().asString() << std::endl;
+	std::cout << "socket bound to: " << sock.getlocaladdr().to_string() << std::endl;
 
 	while(true)	{
 		int i = sock.recvfrom(&buff, 512, &ep);
 		if(i == 4 || i == -1)
 			break;
-		std::cout << "packet from: " << ep.asString() << std::endl
+		std::cout << "packet from: " << ep.to_string() << std::endl
 			  << "DATA START" << std::endl << buff << std::endl
 			  << "DATA END" << std::endl;
 	}

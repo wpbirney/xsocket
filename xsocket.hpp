@@ -197,7 +197,7 @@ struct endpoint {
 		return addrlen;
 	}
 
-	std::string asString() const	{
+	std::string to_string() const	{
 		std::stringstream ss;
 		ss << getIP() << ":" << getPort();
 		return ss.str();
