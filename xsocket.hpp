@@ -167,7 +167,7 @@ struct endpoint {
 
 	std::string get_host( int flags=0 ) const	{
 		char hostbuf[INET6_ADDRSTRLEN];
-		getnameinfo( (sockaddr*)&addr, size(), &hostbuf[0], INET6_ADDRSTRLEN, nullptr, 0, flags );
+		getnameinfo( data(), size(), &hostbuf[0], INET6_ADDRSTRLEN, nullptr, 0, flags );
 		return &hostbuf[0];
 	}
 
@@ -177,7 +177,7 @@ struct endpoint {
 
 	std::string get_service( int flags=0 ) const	{
 		char servbuf[INET6_ADDRSTRLEN];
-		getnameinfo( (sockaddr*)&addr, size(), nullptr, 0, &servbuf[0], INET6_ADDRSTRLEN, flags );
+		getnameinfo( data(), size(), nullptr, 0, &servbuf[0], INET6_ADDRSTRLEN, flags );
 		return &servbuf[0];
 	}
 
