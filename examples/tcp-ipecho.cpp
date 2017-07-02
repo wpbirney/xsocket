@@ -14,7 +14,7 @@ int main()	{
 	net::socket sock( net::af::inet, net::sock::stream, 8080 );
 
 	//make sure socket creation and binding did not fail
-	if( !sock.isValid() )	{
+	if( !sock.good() )	{
 		std::cerr << "error creating socket" << std::endl;
 		return -1;
 	}
@@ -33,7 +33,7 @@ int main()	{
 		client = sock.accept( &remoteAddr );
 
 		//verify that sock.accept did not fail
-		if(client.isValid())	{
+		if(client.good())	{
 			std::string msg = remoteAddr.get_ip();
 			client.send( &msg );
 			client.close();

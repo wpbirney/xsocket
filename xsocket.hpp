@@ -369,7 +369,7 @@ struct socket {
 		return errno;
 	}
 
-	bool isValid() const	{
+	bool good() const	{
 		if( fd != -1 )
 			return true;
 		return false;

@@ -14,7 +14,7 @@ int main()	{
 	net::socket sock( net::af::inet, net::sock::dgram, 8080 );
 
 	//make sure socket creation and binding did not fail
-	if( !sock.isValid() )	{
+	if( !sock.good() )	{
 		std::cerr << "error creating socket" << std::endl;
 		return -1;
 	}

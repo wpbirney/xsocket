@@ -23,7 +23,7 @@ int main()
 
 	//create an ipv6 udp socket, we can optionaly specify the port to bind to as the 3rd arg
 	net::socket v6s ( net::af::inet6, net::sock::dgram, 4444 );
-	if( !v6s.isValid() )	{
+	if( !v6s.good() )	{
 		std::cerr << "failed to create & bind ipv6 socket" << std::endl;
 		return -1;
 	}
