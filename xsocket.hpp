@@ -365,7 +365,7 @@ struct socket {
 		return getname(fd, getpeername, addrfam );
 	}
 
-	int getError() const	{
+	int geterror() const	{
 		return errno;
 	}
 
