@@ -291,6 +291,10 @@ struct socket {
 		return i;
 	}
 
+	std::size_t recvfrom( std::vector<char>& buf, endpoint* ep )	{
+		return recvfrom( buf.data(), buf.size(), ep );
+	}
+
 	std::size_t recvfrom( std::string* buf, std::size_t len, endpoint* ep )	{
 		std::vector<char> buffer( len );
 		int r = recvfrom( buffer.data(), buffer.size(), ep );
@@ -313,6 +317,10 @@ struct socket {
 
 	std::size_t recv( char* buf, std::size_t len )	{
 		return ::recv( fd, buf, len, 0 );
+	}
+
+	std::size_t recv( std::vector<char>& buf )	{
+		return recv( buf.data(), buf.size() );
 	}
 
 	std::size_t recv( std::string* buf, std::size_t len )	{
