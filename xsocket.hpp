@@ -297,7 +297,7 @@ struct socket {
 
 	std::size_t recvfrom( std::string* buf, std::size_t len, endpoint* ep )	{
 		std::vector<char> buffer( len );
-		int r = recvfrom( buffer.data(), buffer.size(), ep );
+		int r = recvfrom( buffer, ep );
 		if( r > 0 )
 			*buf = std::string( buffer.data(), r );
 		return r;
@@ -325,7 +325,7 @@ struct socket {
 
 	std::size_t recv( std::string* buf, std::size_t len )	{
 		std::vector<char> buffer( len );
-		int r = recv( buffer.data(), buffer.size() );
+		int r = recv( buffer );
 		if( r > 0 )
 			*buf = std::string( buffer.data(), r );
 		return r;
