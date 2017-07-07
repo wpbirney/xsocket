@@ -85,6 +85,9 @@ enum class shut	{
 	rdwr = SHUT_RDWR
 };
 
+typedef std::vector<char> buffer;
+typedef std::vector<endpoint> endpoint_buffer;
+
 /*
  *	generic endpoint class for uniform access to ipv4 and ipv6
  */
@@ -116,7 +119,7 @@ struct endpoint {
 	}
 
 	//returns a vector of all possible endpoints for host:port for the specified sock_type and address family
-	static std::vector<endpoint> resolve( const char* host, const char* service, af f )	{
+	static endpoint_buffer resolve( const char* host, const char* service, af f )	{
 
 		//set up our addrinfo hints for the getaddrinfo call
 		addrinfo hints;
@@ -132,10 +135,11 @@ struct endpoint {
 
 		int i = getaddrinfo( host, service, &hints, &res );
 		if( i != 0 )	{
-			throw std::runtime_error(gai_strerror( i ));
+			std::cout << gai_strerror( i ) << std::endl;
+			return endpoint_buffer();
 		}
 
-		std::vector<endpoint> buffer;
+		endpoint_buffer buffer;
 
 		for( rp = res; rp != nullptr; rp = rp->ai_next )	{
 			endpoint ep;
@@ -155,7 +159,7 @@ struct endpoint {
 		const char *host = ip.c_str();
 		if( ip == "0" )
 			host = nullptr;
-		std::vector<endpoint> epList = endpoint::resolve( host, std::to_string(port).c_str(), f );
+		endpoint_buffer epList = endpoint::resolve( host, std::to_string(port).c_str(), f );
 		*this = epList[0];
 	}
 

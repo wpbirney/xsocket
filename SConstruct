@@ -15,6 +15,7 @@ if sys.platform == 'win32' or sys.platform == 'msys' or 'mingw' in cxx:
 env.Program('bin/xsock-basic', source=['examples/xsock-basic.cpp'])
 env.Program('bin/tcp-ipecho', source=['examples/tcp-ipecho.cpp'])
 env.Program('bin/udp-ipecho', source=['examples/udp-ipecho.cpp'])
+env.Program('bin/resolve', source=['examples/resolve.cpp'])
 
 env.Install(prefix, 'xsocket.hpp')
 env.Alias('install', prefix)
